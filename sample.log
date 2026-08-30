@@ -1,0 +1,12 @@
+[2026-06-01 09:00:01] INFO server started on port 8080
+[2026-06-01 09:00:04] INFO request GET /health from 127.0.0.1
+[2026-06-01 09:01:12] WARN slow query took 3.2s
+[2026-06-01 09:01:12] WARN slow query took 4.1s
+[2026-06-01 09:02:33] ERROR payment failed: insufficient funds
+[2026-06-01 09:02:35] INFO retrying payment
+[2026-06-01 09:02:41] ERROR payment failed: gateway timeout
+[2026-06-01 09:05:00] INFO request GET /health from 127.0.0.1
+[2026-06-01 09:06:19] WARN disk usage at 82%
+[2026-06-01 09:07:44] ERROR db connection lost
+not a valid log line at all
+[2026-06-01 09:08:02] INFO db reconnected
