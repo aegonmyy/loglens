@@ -1,11 +1,17 @@
 use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-
+#[derive(Debug, PartialEq)]
+enum Level {
+    Info,
+    Warn,
+    Error,
+    Debug,
+}
 #[derive(Debug)]
 struct LogEntry {
     timestamp: String,
-    level: String,
+    level: Level,
     message: String,
 }
 fn main() {
@@ -14,7 +20,13 @@ fn main() {
         eprintln!("usage: loglens <level> <file>");
         std::process::exit(2);
     }
-    let level = &args[1];
+    let level = match parse_level(&args[1]) {
+        Some(l) => l,
+        None => {
+            eprintln!("loglens: unknown level '{}'", &args[1]);
+            std::process::exit(2);
+        }
+    };
     let path = &args[2];
     match File::open(path) {
         Ok(file) => {
@@ -22,7 +34,7 @@ fn main() {
                 match line {
                     Ok(text) => {
                         if let Some(entry) = parse_line(&text) {
-                            if entry.level.eq_ignore_ascii_case(level) {
+                            if entry.level == level {
                                 println!("{text}")
                             }
                         }
@@ -48,7 +60,17 @@ fn parse_line(line: &str) -> Option<LogEntry> {
     let (level, message) = rest.split_once(" ")?;
     Some(LogEntry {
         timestamp: timestamp.to_string(),
-        level: level.to_string(),
+        level: parse_level(level)?,
         message: message.to_string(),
     })
+}
+
+fn parse_level(s: &str) -> Option<Level> {
+    match s.to_ascii_uppercase().as_str() {
+        "INFO" => Some(Level::Info),
+        "WARN" => Some(Level::Warn),
+        "ERROR" => Some(Level::Error),
+        "DEBUG" => Some(Level::Debug),
+        _ => None,
+    }
 }

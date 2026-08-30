@@ -10,13 +10,10 @@
 - loglens @ C:\Users\Alameen\projects\loglens
 - experiments live in `examples/`, run with `cargo run --example <name>`
 
-## Progress (M0) — COMPLETE
-1. Read CLI args — DONE
-2. Args guard + exit codes — DONE
-3. File::open + Result/match — DONE
-4. Read lines with BufReader — DONE
-5. parse_line (struct + strip_prefix + split_once + ?) — DONE
-6. Filter by level (if let + eq_ignore_ascii_case) — DONE
+## Progress
+- M0 (level filter, String-based) — COMPLETE, committed
+- M1 (Level enum refactor) — COMPLETE
+- M2 (clap args) — NEXT
 
 ## Concepts covered so far
 - env::args, collect, type annotation (Vec<String>)
@@ -27,3 +24,6 @@
 - &str vs String, .to_string()
 - strip_prefix, split_once, tuple destructuring, ? on Option
 - if let, struct field access, eq_ignore_ascii_case
+- enum, #[derive(PartialEq)], match exhaustiveness, _ catch-all
+- ? only in Option/Result-returning fns; match when handling in place
+- expression-as-value (last expr = return, no ; no return)
