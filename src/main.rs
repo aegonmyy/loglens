@@ -1,4 +1,4 @@
-use std::env;
+use clap::Parser;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 #[derive(Debug, PartialEq)]
@@ -8,6 +8,15 @@ enum Level {
     Error,
     Debug,
 }
+
+#[derive(Parser)]
+struct Cli {
+    /// Log level to filter by
+    level: String,
+    /// Path to the log file
+    path: String,
+}
+
 #[derive(Debug)]
 struct LogEntry {
     timestamp: String,
@@ -15,19 +24,15 @@ struct LogEntry {
     message: String,
 }
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 3 {
-        eprintln!("usage: loglens <level> <file>");
-        std::process::exit(2);
-    }
-    let level = match parse_level(&args[1]) {
+    let cli = Cli::parse();
+    let level = match parse_level(&cli.level) {
         Some(l) => l,
         None => {
-            eprintln!("loglens: unknown level '{}'", &args[1]);
+            eprintln!("loglens: unknown level '{}'", &cli.level);
             std::process::exit(2);
         }
     };
-    let path = &args[2];
+    let path = &cli.path;
     match File::open(path) {
         Ok(file) => {
             for line in BufReader::new(file).lines() {

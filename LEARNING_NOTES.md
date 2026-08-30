@@ -12,8 +12,9 @@
 
 ## Progress
 - M0 (level filter, String-based) — COMPLETE, committed
-- M1 (Level enum refactor) — COMPLETE
-- M2 (clap args) — NEXT
+- M1 (Level enum refactor) — COMPLETE, committed
+- M2 (clap args) — COMPLETE, commit pending
+- M3 (stats) — NEXT
 
 ## Concepts covered so far
 - env::args, collect, type annotation (Vec<String>)
@@ -27,3 +28,5 @@
 - enum, #[derive(PartialEq)], match exhaustiveness, _ catch-all
 - ? only in Option/Result-returning fns; match when handling in place
 - expression-as-value (last expr = return, no ; no return)
+- crates & crates.io, Cargo.toml deps, cargo add
+- clap, #[derive(Parser)], /// doc comments, Cli::parse()
