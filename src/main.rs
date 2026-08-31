@@ -1,7 +1,8 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Hash)]
 enum Level {
     Info,
     Warn,
@@ -11,10 +12,24 @@ enum Level {
 
 #[derive(Parser)]
 struct Cli {
-    /// Log level to filter by
-    level: String,
-    /// Path to the log file
-    path: String,
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    /// Filter log lines by level
+    Filter {
+        /// Log level to filter by
+        level: String,
+        /// Path to the log file
+        path: String,
+    },
+    /// Show counts per level
+    Stats {
+        /// Path to the log file
+        path: String,
+    },
 }
 
 #[derive(Debug)]
@@ -25,37 +40,11 @@ struct LogEntry {
 }
 fn main() {
     let cli = Cli::parse();
-    let level = match parse_level(&cli.level) {
-        Some(l) => l,
-        None => {
-            eprintln!("loglens: unknown level '{}'", &cli.level);
-            std::process::exit(2);
-        }
-    };
-    let path = &cli.path;
-    match File::open(path) {
-        Ok(file) => {
-            for line in BufReader::new(file).lines() {
-                match line {
-                    Ok(text) => {
-                        if let Some(entry) = parse_line(&text) {
-                            if entry.level == level {
-                                println!("{text}")
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        eprintln!("loglens: read error {err}");
-                        std::process::exit(1);
-                    }
-                }
-            }
-        }
-        Err(err) => {
-            eprintln!("loglens: cannot open '{path}': {err}");
-            std::process::exit(1);
-        }
+    match cli.command {
+        Command::Filter { level, path } => run_filter(level, path),
+        Command::Stats { path } => run_stats(path),
     }
+    // let path = &cli.path;
 }
 
 fn parse_line(line: &str) -> Option<LogEntry> {
@@ -78,4 +67,66 @@ fn parse_level(s: &str) -> Option<Level> {
         "DEBUG" => Some(Level::Debug),
         _ => None,
     }
+}
+
+fn run_filter(level: String, path: String) {
+    let filter_level = match parse_level(&level) {
+        Some(l) => l,
+        None => {
+            eprintln!("loglens: unknown level '{level}'");
+            std::process::exit(2);
+        }
+    };
+    match File::open(&path) {
+        Ok(file) => {
+            for line in BufReader::new(file).lines() {
+                match line {
+                    Ok(text) => {
+                        if let Some(entry) = parse_line(&text) {
+                            if entry.level == filter_level {
+                                println!("{text}")
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        eprintln!("loglens: read error {err}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+        Err(err) => {
+            eprintln!("loglens: cannot open '{path}': {err}");
+            std::process::exit(1);
+        }
+    }
+}
+
+fn run_stats(path: String) {
+    let mut stats: HashMap<Level, u32> = HashMap::new();
+    match File::open(&path) {
+        Ok(file) => {
+            for line in BufReader::new(file).lines() {
+                match line {
+                    Ok(text) => {
+                        if let Some(ent) = parse_line(&text) {
+                            *stats.entry(ent.level).or_insert(0) += 1;
+                        }
+                    }
+                    Err(err) => {
+                        eprintln!("loglens: read error {}", err);
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+        Err(err) => {
+            eprintln!("loglens: cannot open '{path}': {err}");
+            std::process::exit(1);
+        }
+    };
+    for level in [Level::Debug, Level::Info, Level::Error, Level::Warn] {
+        println!("{:?} {}", level, stats.get(&level).unwrap_or(&0));
+    }
+    let _ = path;
 }

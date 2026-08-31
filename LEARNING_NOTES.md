@@ -13,8 +13,9 @@
 ## Progress
 - M0 (level filter, String-based) — COMPLETE, committed
 - M1 (Level enum refactor) — COMPLETE, committed
-- M2 (clap args) — COMPLETE, commit pending
-- M3 (stats) — NEXT
+- M2 (clap args) — COMPLETE, committed
+- M3 (stats subcommand + HashMap) — COMPLETE, commit pending
+- M4 (time filtering --since) — NEXT
 
 ## Concepts covered so far
 - env::args, collect, type annotation (Vec<String>)
@@ -30,3 +31,8 @@
 - expression-as-value (last expr = return, no ; no return)
 - crates & crates.io, Cargo.toml deps, cargo add
 - clap, #[derive(Parser)], /// doc comments, Cli::parse()
+- clap subcommands, #[derive(Subcommand)], match dispatch
+- HashMap, entry().or_insert(), get().unwrap_or()
+- Copy vs Clone, ownership/moves (one owner, photocopy vs move)
+- PartialEq vs Eq vs Hash (why HashMap needs Eq+Hash)
+- derive: Debug, PartialEq, Eq, Hash, Copy, Clone
