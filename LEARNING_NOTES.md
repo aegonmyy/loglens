@@ -14,8 +14,9 @@
 - M0 (level filter, String-based) — COMPLETE, committed
 - M1 (Level enum refactor) — COMPLETE, committed
 - M2 (clap args) — COMPLETE, committed
-- M3 (stats subcommand + HashMap) — COMPLETE, commit pending
-- M4 (time filtering --since) — NEXT
+- M3 (stats subcommand + HashMap) — COMPLETE, committed
+- M4 (chrono timestamps + --since time filter) — COMPLETE, commit pending
+- M5 (JSON logs + serde) — NEXT (also: `message` field still unread — grep-style message search could read it)
 
 ## Concepts covered so far
 - env::args, collect, type annotation (Vec<String>)
@@ -36,3 +37,7 @@
 - Copy vs Clone, ownership/moves (one owner, photocopy vs move)
 - PartialEq vs Eq vs Hash (why HashMap needs Eq+Hash)
 - derive: Debug, PartialEq, Eq, Hash, Copy, Clone
+- chrono, NaiveDateTime, format strings (%Y-%m-%d), .ok() Result→Option
+- Duration, strip_suffix, u64, Option<T> as optional clap flag
+- E0382 moved value error — computing once outside loop vs clone-per-iteration
+- closures |x| ... exist but beginner style = helper fn with ? + match

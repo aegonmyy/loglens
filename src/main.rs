@@ -1,7 +1,10 @@
+use chrono::{Local, NaiveDateTime};
 use clap::{Parser, Subcommand};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::time::Duration;
+
 #[derive(Debug, PartialEq, Clone, Copy, Eq, Hash)]
 enum Level {
     Info,
@@ -24,6 +27,9 @@ enum Command {
         level: String,
         /// Path to the log file
         path: String,
+
+        #[arg(long)]
+        since: Option<String>,
     },
     /// Show counts per level
     Stats {
@@ -34,14 +40,14 @@ enum Command {
 
 #[derive(Debug)]
 struct LogEntry {
-    timestamp: String,
+    timestamp: NaiveDateTime,
     level: Level,
     message: String,
 }
 fn main() {
     let cli = Cli::parse();
     match cli.command {
-        Command::Filter { level, path } => run_filter(level, path),
+        Command::Filter { level, path, since } => run_filter(level, path, since),
         Command::Stats { path } => run_stats(path),
     }
     // let path = &cli.path;
@@ -53,7 +59,7 @@ fn parse_line(line: &str) -> Option<LogEntry> {
     let (timestamp, rest) = res2?;
     let (level, message) = rest.split_once(" ")?;
     Some(LogEntry {
-        timestamp: timestamp.to_string(),
+        timestamp: NaiveDateTime::parse_from_str(timestamp, "%Y-%m-%d %H:%M:%S").ok()?,
         level: parse_level(level)?,
         message: message.to_string(),
     })
@@ -69,7 +75,7 @@ fn parse_level(s: &str) -> Option<Level> {
     }
 }
 
-fn run_filter(level: String, path: String) {
+fn run_filter(level: String, path: String, since: Option<String>) {
     let filter_level = match parse_level(&level) {
         Some(l) => l,
         None => {
@@ -77,6 +83,7 @@ fn run_filter(level: String, path: String) {
             std::process::exit(2);
         }
     };
+    let cutoff = compute_cutoff(since);
     match File::open(&path) {
         Ok(file) => {
             for line in BufReader::new(file).lines() {
@@ -84,7 +91,13 @@ fn run_filter(level: String, path: String) {
                     Ok(text) => {
                         if let Some(entry) = parse_line(&text) {
                             if entry.level == filter_level {
-                                println!("{text}")
+                                let time_ok = match cutoff {
+                                    Some(c) => entry.timestamp >= c, // cutoff exists: compare
+                                    None => true,                    // no cutoff: keep it
+                                };
+                                if time_ok {
+                                    println!("{text}");
+                                }
                             }
                         }
                     }
@@ -129,4 +142,23 @@ fn run_stats(path: String) {
         println!("{:?} {}", level, stats.get(&level).unwrap_or(&0));
     }
     let _ = path;
+}
+
+fn parse_since(s: &str) -> Option<Duration> {
+    if let Some(minutes) = s.strip_suffix("m") {
+        let mins: u64 = minutes.parse().ok()?;
+        Some(Duration::from_secs(mins * 60))
+    } else if let Some(hours) = s.strip_suffix("h") {
+        let hrs: u64 = hours.parse().ok()?;
+        Some(Duration::from_secs(hrs * 60 * 60))
+    } else {
+        None
+    }
+}
+
+fn compute_cutoff(since: Option<String>) -> Option<NaiveDateTime> {
+    let s = since?; // None? stop, return None
+    let dur = parse_since(&s)?; // unparsable? stop, return None
+    let now = Local::now().naive_local();
+    Some(now - dur)
 }
