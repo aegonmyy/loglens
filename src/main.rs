@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, PartialEq, Clone, Copy, Eq, Hash)]
 enum Level {
@@ -51,7 +51,6 @@ fn main() {
         Command::Filter { level, path, since } => run_filter(level, path, since),
         Command::Stats { path } => run_stats(path),
     }
-    // let path = &cli.path;
 }
 fn parse_line(line: &str) -> Option<LogEntry> {
     if let Some(entry) = parse_plain(line) {
@@ -126,13 +125,18 @@ fn run_filter(level: String, path: String, since: Option<String>) {
 }
 
 fn run_stats(path: String) {
+    let start = Instant::now();
+    let mut total: u64 = 0;
+    let mut parsed: u64 = 0;
     let mut stats: HashMap<Level, u32> = HashMap::new();
     match File::open(&path) {
         Ok(file) => {
             for line in BufReader::new(file).lines() {
                 match line {
                     Ok(text) => {
+                        total += 1;
                         if let Some(ent) = parse_line(&text) {
+                            parsed += 1;
                             *stats.entry(ent.level).or_insert(0) += 1;
                         }
                     }
@@ -157,7 +161,12 @@ fn run_stats(path: String) {
     ] {
         println!("{:?} {}", level, stats.get(&level).unwrap_or(&0));
     }
-    let _ = path;
+    let elapsed = start.elapsed();
+    eprintln!(
+        "parsed {parsed}/{total} lines in {}ms ({:.0} lines/sec)",
+        elapsed.as_millis(),
+        parsed as f64 / elapsed.as_secs_f64()
+    );
 }
 
 fn parse_since(s: &str) -> Option<Duration> {
@@ -197,7 +206,7 @@ fn parse_spark(line: &str) -> Option<LogEntry> {
     let (date, rest) = line.split_once(' ')?;
     let (time, rest) = rest.split_once(' ')?;
     let timestamp =
-        NaiveDateTime::parse_from_str(&format!("{date} {time}"), "%Y/%m/%d %H:%M:%S").ok()?;
+        NaiveDateTime::parse_from_str(&format!("{date} {time}"), "%y/%m/%d %H:%M:%S").ok()?;
     let (level, message) = rest.split_once(" ")?;
     Some(LogEntry {
         timestamp,
