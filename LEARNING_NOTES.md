@@ -15,8 +15,15 @@
 - M1 (Level enum refactor) — COMPLETE, committed
 - M2 (clap args) — COMPLETE, committed
 - M3 (stats subcommand + HashMap) — COMPLETE, committed
-- M4 (chrono timestamps + --since time filter) — COMPLETE, commit pending
-- M5 (JSON logs + serde) — NEXT (also: `message` field still unread — grep-style message search could read it)
+- M4 (chrono timestamps + --since time filter) — COMPLETE, committed
+- M5 (multi-format parsing on real LogHub data) — IN PROGRESS: Fatal level added, parse_plain extracted, parse_log4j DONE (hadoop 2000/2000 lines). Next: spark, zookeeper
+- M6 (measure: timing/benchmark on real data) — PLANNED
+- M7 (cut allocations: borrow instead of copy, lifetimes for real) — PLANNED
+- M8 (parallelism: rayon, threads, Send/Sync) — PLANNED
+
+## Real data
+- testdata/ folder: LogHub 2k samples (hadoop, spark, zookeeper, hdfs, healthapp, openssh)
+- none match our [YYYY-MM-DD HH:MM:SS] LEVEL msg format — that's the M5 feature
 
 ## Concepts covered so far
 - env::args, collect, type annotation (Vec<String>)

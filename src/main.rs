@@ -11,6 +11,7 @@ enum Level {
     Warn,
     Error,
     Debug,
+    Fatal,
 }
 
 #[derive(Parser)]
@@ -52,8 +53,14 @@ fn main() {
     }
     // let path = &cli.path;
 }
-
 fn parse_line(line: &str) -> Option<LogEntry> {
+    if let Some(entry) = parse_plain(line) {
+        return Some(entry);
+    }
+    parse_log4j(line)
+}
+
+fn parse_plain(line: &str) -> Option<LogEntry> {
     let res = line.strip_prefix("[");
     let res2 = res?.split_once("] ");
     let (timestamp, rest) = res2?;
@@ -71,6 +78,7 @@ fn parse_level(s: &str) -> Option<Level> {
         "WARN" => Some(Level::Warn),
         "ERROR" => Some(Level::Error),
         "DEBUG" => Some(Level::Debug),
+        "FATAL" => Some(Level::Fatal),
         _ => None,
     }
 }
@@ -138,7 +146,13 @@ fn run_stats(path: String) {
             std::process::exit(1);
         }
     };
-    for level in [Level::Debug, Level::Info, Level::Error, Level::Warn] {
+    for level in [
+        Level::Debug,
+        Level::Info,
+        Level::Error,
+        Level::Warn,
+        Level::Fatal,
+    ] {
         println!("{:?} {}", level, stats.get(&level).unwrap_or(&0));
     }
     let _ = path;
@@ -161,4 +175,18 @@ fn compute_cutoff(since: Option<String>) -> Option<NaiveDateTime> {
     let dur = parse_since(&s)?; // unparsable? stop, return None
     let now = Local::now().naive_local();
     Some(now - dur)
+}
+
+fn parse_log4j(line: &str) -> Option<LogEntry> {
+    let (date, rest) = line.split_once(' ')?; // "2015-10-18" | "18:01:47,978 INFO ..."
+    let (time, rest) = rest.split_once(' ')?; // "18:01:47,978" | "INFO [main] ..."
+    let (secs, _millis) = time.split_once(',')?; // "18:01:47" | "978" (dropped)
+    let timestamp =
+        NaiveDateTime::parse_from_str(&format!("{date} {secs}"), "%Y-%m-%d %H:%M:%S").ok()?;
+    let (level, message) = rest.split_once(' ')?; // "INFO" | "[main] org.apache..."
+    Some(LogEntry {
+        timestamp,
+        level: parse_level(level)?,
+        message: message.to_string(),
+    })
 }
