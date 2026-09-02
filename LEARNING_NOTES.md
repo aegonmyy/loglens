@@ -16,8 +16,8 @@
 - M2 (clap args) — COMPLETE, committed
 - M3 (stats subcommand + HashMap) — COMPLETE, committed
 - M4 (chrono timestamps + --since time filter) — COMPLETE, committed
-- M5 (multi-format parsing on real LogHub data) — IN PROGRESS: Fatal level added, parse_plain extracted, parse_log4j DONE (hadoop 2000/2000 lines). Next: spark, zookeeper
-- M6 (measure: timing/benchmark on real data) — PLANNED
+- M5 (multi-format parsing on real LogHub data) — COMPLETE, committed: plain/log4j/spark/zookeeper, 2000/2000 on all three real files
+- M6 (measure: timing/benchmark on real data) — NEXT
 - M7 (cut allocations: borrow instead of copy, lifetimes for real) — PLANNED
 - M8 (parallelism: rayon, threads, Send/Sync) — PLANNED
 

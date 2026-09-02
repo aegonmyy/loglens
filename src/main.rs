@@ -58,6 +58,8 @@ fn parse_line(line: &str) -> Option<LogEntry> {
         return Some(entry);
     }
     parse_log4j(line)
+        .or_else(|| parse_spark(line))
+        .or_else(|| parse_zookeeper(line))
 }
 
 fn parse_plain(line: &str) -> Option<LogEntry> {
@@ -180,6 +182,33 @@ fn compute_cutoff(since: Option<String>) -> Option<NaiveDateTime> {
 fn parse_log4j(line: &str) -> Option<LogEntry> {
     let (date, rest) = line.split_once(' ')?; // "2015-10-18" | "18:01:47,978 INFO ..."
     let (time, rest) = rest.split_once(' ')?; // "18:01:47,978" | "INFO [main] ..."
+    let (secs, _millis) = time.split_once(',')?; // "18:01:47" | "978" (dropped)
+    let timestamp =
+        NaiveDateTime::parse_from_str(&format!("{date} {secs}"), "%Y-%m-%d %H:%M:%S").ok()?;
+    let (level, message) = rest.split_once(' ')?; // "INFO" | "[main] org.apache..."
+    Some(LogEntry {
+        timestamp,
+        level: parse_level(level)?,
+        message: message.to_string(),
+    })
+}
+
+fn parse_spark(line: &str) -> Option<LogEntry> {
+    let (date, rest) = line.split_once(' ')?;
+    let (time, rest) = rest.split_once(' ')?;
+    let timestamp =
+        NaiveDateTime::parse_from_str(&format!("{date} {time}"), "%Y/%m/%d %H:%M:%S").ok()?;
+    let (level, message) = rest.split_once(" ")?;
+    Some(LogEntry {
+        timestamp,
+        level: parse_level(level)?,
+        message: message.to_string(),
+    })
+}
+
+fn parse_zookeeper(line: &str) -> Option<LogEntry> {
+    let (date, rest) = line.split_once(' ')?; // "2015-10-18" | "18:01:47,978 INFO ..."
+    let (time, rest) = rest.split_once(" - ")?; // "18:01:47,978" | "INFO [main] ..."
     let (secs, _millis) = time.split_once(',')?; // "18:01:47" | "978" (dropped)
     let timestamp =
         NaiveDateTime::parse_from_str(&format!("{date} {secs}"), "%Y-%m-%d %H:%M:%S").ok()?;
