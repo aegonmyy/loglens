@@ -18,9 +18,10 @@
 - M4 (chrono timestamps + --since time filter) — COMPLETE, committed
 - M5 (multi-format parsing on real LogHub data) — COMPLETE, committed: plain/log4j/spark/zookeeper, 2000/2000 on all three real files
 - M6 (measure) — COMPLETE: Instant timing on stats, stderr report, gen_big.rs harness (100 cycles), verified 600,000/600,000 exact counts
-- M7 (cut allocations: borrow instead of copy, lifetimes for real) — NEXT
-  - BASELINE to beat: 355,709 lines/sec (release, big.log 600k lines, 1686ms)
-  - known costs: message.to_string() per line, format! per timestamp parse, chrono parse_from_str
+- M7 (cut allocations) — IN PROGRESS
+  - BASELINE (M6): 355,709 lines/sec (release, big.log 600k, ~1686ms)
+  - CUT 1 DONE: removed format! from timestamp parsing (NaiveDate+NaiveTime+and_time) — now ~518-590k lines/sec (median), ~1.5-1.7x. Counts still exact.
+  - CUT 2 NEXT: borrow the message (&str instead of String) — lifetimes for real
 - M8 (parallelism: rayon, threads, Send/Sync) — PLANNED
 
 ## Real data

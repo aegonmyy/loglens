@@ -1,4 +1,4 @@
-use chrono::{Local, NaiveDateTime};
+use chrono::{Local, NaiveDate, NaiveDateTime, NaiveTime};
 use clap::{Parser, Subcommand};
 use std::collections::HashMap;
 use std::fs::File;
@@ -192,9 +192,10 @@ fn parse_log4j(line: &str) -> Option<LogEntry> {
     let (date, rest) = line.split_once(' ')?; // "2015-10-18" | "18:01:47,978 INFO ..."
     let (time, rest) = rest.split_once(' ')?; // "18:01:47,978" | "INFO [main] ..."
     let (secs, _millis) = time.split_once(',')?; // "18:01:47" | "978" (dropped)
-    let timestamp =
-        NaiveDateTime::parse_from_str(&format!("{date} {secs}"), "%Y-%m-%d %H:%M:%S").ok()?;
     let (level, message) = rest.split_once(' ')?; // "INFO" | "[main] org.apache..."
+    let date = NaiveDate::parse_from_str(date, "%Y-%m-%d").ok()?;
+    let time = NaiveTime::parse_from_str(secs, "%H:%M:%S").ok()?;
+    let timestamp = date.and_time(time);
     Some(LogEntry {
         timestamp,
         level: parse_level(level)?,
@@ -205,8 +206,9 @@ fn parse_log4j(line: &str) -> Option<LogEntry> {
 fn parse_spark(line: &str) -> Option<LogEntry> {
     let (date, rest) = line.split_once(' ')?;
     let (time, rest) = rest.split_once(' ')?;
-    let timestamp =
-        NaiveDateTime::parse_from_str(&format!("{date} {time}"), "%y/%m/%d %H:%M:%S").ok()?;
+    let date = NaiveDate::parse_from_str(date, "%Y/%m/%d").ok()?;
+    let time = NaiveTime::parse_from_str(time, "%H:%M:%S").ok()?;
+    let timestamp = date.and_time(time);
     let (level, message) = rest.split_once(" ")?;
     Some(LogEntry {
         timestamp,
@@ -219,8 +221,9 @@ fn parse_zookeeper(line: &str) -> Option<LogEntry> {
     let (date, rest) = line.split_once(' ')?; // "2015-10-18" | "18:01:47,978 INFO ..."
     let (time, rest) = rest.split_once(" - ")?; // "18:01:47,978" | "INFO [main] ..."
     let (secs, _millis) = time.split_once(',')?; // "18:01:47" | "978" (dropped)
-    let timestamp =
-        NaiveDateTime::parse_from_str(&format!("{date} {secs}"), "%Y-%m-%d %H:%M:%S").ok()?;
+    let date = NaiveDate::parse_from_str(date, "%Y-%m-%d").ok()?;
+    let time = NaiveTime::parse_from_str(secs, "%H:%M:%S").ok()?;
+    let timestamp = date.and_time(time);
     let (level, message) = rest.split_once(' ')?; // "INFO" | "[main] org.apache..."
     Some(LogEntry {
         timestamp,
