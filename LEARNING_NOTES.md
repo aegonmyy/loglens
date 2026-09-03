@@ -24,7 +24,11 @@
   - CUT 2: LogEntry<'a> with borrowed message (&str), elision + '_ in signatures → ~775-850K (~2.3x)
   - lesson: first benchmark run after rebuild = cold-start noise, discard it
   - remaining known cost: chrono parse_from_str itself (hand-rolled parser = future option)
-- M8 (parallelism: rayon, threads, Send/Sync) — NEXT
+- M8 (parallelism: rayon) — COMPLETE
+  - stats now loads file + par_lines() ≥2x faster (parallel), ~1.3-1.4M lines/sec (~1.7x over M7 single-core, ~3.8x over M6 baseline)
+  - tradeoff: stats loads whole file into RAM (streaming: filter only). chunked parallel = future M8.5
+  - note: use rayon prelude = trait-in-scope rule (par_lines lives on a trait)
+- ROADMAP: M9 = grep/message search (reads message, kills last warning) — then crate polish/publish
 
 ## Real data
 - testdata/ folder: LogHub 2k samples (hadoop, spark, zookeeper, hdfs, healthapp, openssh)

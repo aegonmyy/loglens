@@ -1,7 +1,8 @@
 use chrono::{Local, NaiveDate, NaiveDateTime, NaiveTime};
 use clap::{Parser, Subcommand};
+use rayon::prelude::*;
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::time::{Duration, Instant};
 
@@ -126,32 +127,45 @@ fn run_filter(level: String, path: String, since: Option<String>) {
 
 fn run_stats(path: String) {
     let start = Instant::now();
-    let mut total: u64 = 0;
-    let mut parsed: u64 = 0;
+    let content = fs::read_to_string(&path).unwrap_or_else(|err| {
+        eprintln!("loglens: cannot open '{path}': {err}");
+        std::process::exit(1);
+    });
+    let mut total: u64 = content.lines().count() as u64;
+    let levels: Vec<Level> = content
+        .par_lines()
+        .filter_map(parse_line)
+        .map(|entry| entry.level)
+        .collect();
+    let mut parsed: u64 = levels.len() as u64;
     let mut stats: HashMap<Level, u32> = HashMap::new();
-    match File::open(&path) {
-        Ok(file) => {
-            for line in BufReader::new(file).lines() {
-                match line {
-                    Ok(text) => {
-                        total += 1;
-                        if let Some(ent) = parse_line(&text) {
-                            parsed += 1;
-                            *stats.entry(ent.level).or_insert(0) += 1;
-                        }
-                    }
-                    Err(err) => {
-                        eprintln!("loglens: read error {}", err);
-                        std::process::exit(1);
-                    }
-                }
-            }
-        }
-        Err(err) => {
-            eprintln!("loglens: cannot open '{path}': {err}");
-            std::process::exit(1);
-        }
-    };
+
+    // match File::open(&path) {
+    //     Ok(file) => {
+    //         for line in BufReader::new(file).lines() {
+    //             match line {
+    //                 Ok(text) => {
+    //                     total += 1;
+    //                     if let Some(ent) = parse_line(&text) {
+    //                         parsed += 1;
+    //                         *stats.entry(ent.level).or_insert(0) += 1;
+    //                     }
+    //                 }
+    //                 Err(err) => {
+    //                     eprintln!("loglens: read error {}", err);
+    //                     std::process::exit(1);
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     Err(err) => {
+    //         eprintln!("loglens: cannot open '{path}': {err}");
+    //         std::process::exit(1);
+    //     }
+    // };
+    for level in levels {
+        *stats.entry(level).or_insert(0) += 1;
+    }
     for level in [
         Level::Debug,
         Level::Info,
