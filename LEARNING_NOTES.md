@@ -29,6 +29,13 @@
   - tradeoff: stats loads whole file into RAM (streaming: filter only). chunked parallel = future M8.5
   - note: use rayon prelude = trait-in-scope rule (par_lines lives on a trait)
 - ROADMAP: M9 = grep/message search (reads message, kills last warning) — then crate polish/publish
+- git lesson (PITFALL RECORDED): generated files (big.log) should be gitignored from day one. Had to rewrite history with git filter-branch. NEVER rewrite pushed/shared history. Repo 161KiB now.
+
+## Milestone performance arc (all release, big.log 600k)
+- M6 baseline: 355,709 lines/sec
+- M7 cut1 (no format!): ~550K
+- M7 cut2 (borrowed msg): ~800K
+- M8 (rayon parallel): ~1.3-1.4M lines/sec (~3.8x total)
 
 ## Real data
 - testdata/ folder: LogHub 2k samples (hadoop, spark, zookeeper, hdfs, healthapp, openssh)
