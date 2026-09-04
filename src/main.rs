@@ -245,3 +245,52 @@ fn parse_zookeeper(line: &str) -> Option<LogEntry<'_>> {
         message: message,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn parses_plain_line() {
+        let line = "[2026-06-01 09:00:01] ERROR payment failed: insufficient funds";
+        let entry = parse_line(line).expect("should parse");
+
+        assert_eq!(entry.level, Level::Error);
+        assert_eq!(entry.message, "payment failed: insufficient funds");
+    }
+    #[test]
+    fn parses_spark_line() {
+        // real line from testdata/spark_2k.log
+        let line = "17/06/09 20:10:40 INFO spark.SecurityManager: Changing view acls to: yarn,curi";
+        let entry = parse_spark(line).expect("should parse");
+
+        assert_eq!(entry.level, Level::Info);
+        assert_eq!(
+            entry.message,
+            "spark.SecurityManager: Changing view acls to: yarn,curi"
+        );
+    }
+    #[test]
+    fn parses_log4j_line() {
+        // real line from testdata/hadoop_2k.log
+        let line = "2015-10-18 18:01:47,978 INFO [main] org.apache.hadoop.mapreduce.v2.app.MRAppMaster: Created MRAppMaster for application appattempt_1445144423722_0020_000001";
+        let entry = parse_log4j(line).expect("should parse");
+
+        assert_eq!(entry.level, Level::Info);
+        assert_eq!(
+            entry.message,
+            "[main] org.apache.hadoop.mapreduce.v2.app.MRAppMaster: Created MRAppMaster for application appattempt_1445144423722_0020_000001"
+        );
+    }
+    #[test]
+    fn parses_zookeeper_line() {
+        // real line from testdata/zookeeper_2k.log
+        let line = "2015-07-29 17:41:44,747 - INFO  [QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774] - Notification time out: 3200";
+        let entry = parse_zookeeper(line).expect("should parse");
+
+        assert_eq!(entry.level, Level::Info);
+        assert_eq!(
+            entry.message,
+            " [QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774] - Notification time out: 3200"
+        );
+    }
+}
