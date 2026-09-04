@@ -32,6 +32,9 @@ enum Command {
 
         #[arg(long)]
         since: Option<String>,
+
+        #[arg(long)]
+        contains: Option<String>,
     },
     /// Show counts per level
     Stats {
@@ -49,7 +52,12 @@ struct LogEntry<'a> {
 fn main() {
     let cli = Cli::parse();
     match cli.command {
-        Command::Filter { level, path, since } => run_filter(level, path, since),
+        Command::Filter {
+            level,
+            path,
+            since,
+            contains,
+        } => run_filter(level, path, since, contains),
         Command::Stats { path } => run_stats(path),
     }
 }
@@ -85,7 +93,7 @@ fn parse_level(s: &str) -> Option<Level> {
     }
 }
 
-fn run_filter(level: String, path: String, since: Option<String>) {
+fn run_filter(level: String, path: String, since: Option<String>, contains: Option<String>) {
     let filter_level = match parse_level(&level) {
         Some(l) => l,
         None => {
@@ -105,7 +113,7 @@ fn run_filter(level: String, path: String, since: Option<String>) {
                                     Some(c) => entry.timestamp >= c, // cutoff exists: compare
                                     None => true,                    // no cutoff: keep it
                                 };
-                                if time_ok {
+                                if time_ok && message_matches(entry.message, contains.as_deref()) {
                                     println!("{text}");
                                 }
                             }
@@ -131,13 +139,13 @@ fn run_stats(path: String) {
         eprintln!("loglens: cannot open '{path}': {err}");
         std::process::exit(1);
     });
-    let mut total: u64 = content.lines().count() as u64;
+    let total: u64 = content.lines().count() as u64;
     let levels: Vec<Level> = content
         .par_lines()
         .filter_map(parse_line)
         .map(|entry| entry.level)
         .collect();
-    let mut parsed: u64 = levels.len() as u64;
+    let parsed: u64 = levels.len() as u64;
     let mut stats: HashMap<Level, u32> = HashMap::new();
 
     // match File::open(&path) {
@@ -292,5 +300,29 @@ mod tests {
             entry.message,
             " [QuorumPeer[myid=1]/0:0:0:0:0:0:0:0:2181:FastLeaderElection@774] - Notification time out: 3200"
         );
+    }
+    #[test]
+    fn rejects_non_level_shape() {
+        let line = "[2026-06-01 09:00:01] NOTALEVEL something happened";
+        assert!(parse_line(line).is_none());
+    }
+
+    #[test]
+    fn rejects_unknown_level_log4j() {
+        let line = "2015-10-18 18:01:47,978 TRACE some debug message";
+        assert!(parse_log4j(line).is_none());
+    }
+
+    #[test]
+    fn rejects_complete_garbage() {
+        let line = "not a valid log line at all";
+        assert!(parse_line(line).is_none());
+    }
+}
+
+fn message_matches(message: &str, contains: Option<&str>) -> bool {
+    match contains {
+        Some(text) => message.contains(text),
+        None => true,
     }
 }
