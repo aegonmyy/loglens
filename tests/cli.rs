@@ -61,3 +61,19 @@ fn since_filters_old_lines() {
 
     assert!(stdout.is_empty());
 }
+#[test]
+fn contains_filters_by_message() {
+    let output = Command::new(env!("CARGO_BIN_EXE_loglens"))
+        .args(["filter", "error", "--contains", "payment", "sample.log"])
+        .output()
+        .expect("failed to run loglens");
+
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("stdout should be valid UTF-8");
+
+    let lines: Vec<&str> = stdout.lines().collect();
+
+    assert_eq!(lines.len(), 2);
+    assert!(lines.iter().all(|line| line.contains("payment")));
+}

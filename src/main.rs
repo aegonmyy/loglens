@@ -78,7 +78,7 @@ fn parse_plain(line: &str) -> Option<LogEntry<'_>> {
     Some(LogEntry {
         timestamp: NaiveDateTime::parse_from_str(timestamp, "%Y-%m-%d %H:%M:%S").ok()?,
         level: parse_level(level)?,
-        message: message,
+        message,
     })
 }
 
@@ -107,15 +107,16 @@ fn run_filter(level: String, path: String, since: Option<String>, contains: Opti
             for line in BufReader::new(file).lines() {
                 match line {
                     Ok(text) => {
-                        if let Some(entry) = parse_line(&text) {
-                            if entry.level == filter_level {
-                                let time_ok = match cutoff {
-                                    Some(c) => entry.timestamp >= c, // cutoff exists: compare
-                                    None => true,                    // no cutoff: keep it
-                                };
-                                if time_ok && message_matches(entry.message, contains.as_deref()) {
-                                    println!("{text}");
-                                }
+                        if let Some(entry) = parse_line(&text)
+                            && entry.level == filter_level
+                        {
+                            let time_ok = match cutoff {
+                                Some(c) => entry.timestamp >= c,
+                                None => true,
+                            };
+
+                            if time_ok && message_matches(entry.message, contains.as_deref()) {
+                                println!("{text}");
                             }
                         }
                     }
@@ -130,6 +131,12 @@ fn run_filter(level: String, path: String, since: Option<String>, contains: Opti
             eprintln!("loglens: cannot open '{path}': {err}");
             std::process::exit(1);
         }
+    }
+}
+fn message_matches(message: &str, contains: Option<&str>) -> bool {
+    match contains {
+        Some(text) => message.contains(text),
+        None => true,
     }
 }
 
@@ -221,7 +228,7 @@ fn parse_log4j(line: &str) -> Option<LogEntry<'_>> {
     Some(LogEntry {
         timestamp,
         level: parse_level(level)?,
-        message: message,
+        message,
     })
 }
 
@@ -235,7 +242,7 @@ fn parse_spark(line: &str) -> Option<LogEntry<'_>> {
     Some(LogEntry {
         timestamp,
         level: parse_level(level)?,
-        message: message,
+        message,
     })
 }
 
@@ -250,7 +257,7 @@ fn parse_zookeeper(line: &str) -> Option<LogEntry<'_>> {
     Some(LogEntry {
         timestamp,
         level: parse_level(level)?,
-        message: message,
+        message,
     })
 }
 
@@ -317,12 +324,5 @@ mod tests {
     fn rejects_complete_garbage() {
         let line = "not a valid log line at all";
         assert!(parse_line(line).is_none());
-    }
-}
-
-fn message_matches(message: &str, contains: Option<&str>) -> bool {
-    match contains {
-        Some(text) => message.contains(text),
-        None => true,
     }
 }

@@ -28,7 +28,10 @@
   - stats now loads file + par_lines() ≥2x faster (parallel), ~1.3-1.4M lines/sec (~1.7x over M7 single-core, ~3.8x over M6 baseline)
   - tradeoff: stats loads whole file into RAM (streaming: filter only). chunked parallel = future M8.5
   - note: use rayon prelude = trait-in-scope rule (par_lines lives on a trait)
-- ROADMAP: M9 = grep/message search (reads message, kills last warning) — then crate polish/publish
+- M9 (message search + tests) — COMPLETE: --contains filter, 7 unit tests + 5 integration tests
+- M10 (crate polish/publish) — NEXT: Cargo metadata, README, license, package, publish dry-run
+- quality gate: cargo clippy --all-targets --all-features -- -D warnings — PASSED
+- quality gate: cargo test — PASSED (12 total: 7 unit + 5 integration)
 - git lesson (PITFALL RECORDED): generated files (big.log) should be gitignored from day one. Had to rewrite history with git filter-branch. NEVER rewrite pushed/shared history. Repo 161KiB now.
 
 ## Milestone performance arc (all release, big.log 600k)
