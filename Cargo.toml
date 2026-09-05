@@ -2,6 +2,13 @@
 name = "loglens"
 version = "0.1.0"
 edition = "2024"
+description = "A fast multi-format log filtering and statistics CLI"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/aegonmyy/loglens"
+keywords = ["logs", "cli", "parser", "performance"]
+categories = ["command-line-utilities"]
+exclude = ["testdata/", "LEARNING_NOTES.md"]
 
 [dependencies]
 chrono = "0.4.45"

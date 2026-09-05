@@ -9,10 +9,7 @@ use std::io::Write;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let cycles: u32 = args
-        .get(1)
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(100);
+    let cycles: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(100);
     let out = args
         .get(2)
         .cloned()
